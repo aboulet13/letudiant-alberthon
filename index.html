@@ -378,8 +378,18 @@
                 const filters = { domaine_etude: document.getElementById('score-f-domaine').value || null, study_level: document.getElementById('score-f-niveau').value || null, region: null };
                 const data = await (await fetch('/api/estimate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(filters) })).json();
                 
+                // Mise à jour des grosses cartes de stats (A, B, C)
                 document.getElementById('score-vol-a').innerText = formatNumber(data.grades.A.vol); document.getElementById('score-vol-b').innerText = formatNumber(data.grades.B.vol); document.getElementById('score-vol-c').innerText = formatNumber(data.grades.C.vol);
                 document.getElementById('score-rev-a').innerText = formatEuro(data.grades.A.total); document.getElementById('score-rev-b').innerText = formatEuro(data.grades.B.total); document.getElementById('score-rev-c').innerText = formatEuro(data.grades.C.total);
+
+                // NOUVEAU : Mise à jour de l'encart noir "Revenu potentiel" en bas à droite
+                document.getElementById('l-vol-a').innerText = formatNumber(data.grades.A.vol);
+                document.getElementById('l-rev-a').innerText = formatEuro(data.grades.A.total);
+                document.getElementById('l-vol-b').innerText = formatNumber(data.grades.B.vol);
+                document.getElementById('l-rev-b').innerText = formatEuro(data.grades.B.total);
+                document.getElementById('l-vol-c').innerText = formatNumber(data.grades.C.vol);
+                document.getElementById('l-rev-c').innerText = formatEuro(data.grades.C.total);
+                document.getElementById('l-rev-total').innerText = formatEuro(data.prix_total);
 
                 if (revenueChartInstance) revenueChartInstance.destroy();
                 revenueChartInstance = new Chart(document.getElementById('revenueChart').getContext('2d'), { 
