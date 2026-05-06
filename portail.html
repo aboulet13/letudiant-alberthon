@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L'Étudiant · Data Marketplace</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8f7ff;--surf:#fff;--bord:#e8e6f8;--acc:#6d5cff;--pur:#9b6dff;--dark:#0e0e1c;
+--txt:#1a1a3e;--sub:#6b6b9a;--mut:#a0a0c0;--grn:#10b981;--amb:#f59e0b;--red:#ef4444;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#d4d0f0;border-radius:2px}
+
+.nav{background:var(--dark);padding:0 40px;height:60px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:200}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--acc),var(--pur));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff}
+.nav-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:#fff}
+.nav-sub{font-size:9px;color:#6666aa;letter-spacing:1.5px;text-transform:uppercase}
+.cart-btn{display:flex;align-items:center;gap:8px;background:#ffffff15;border:1px solid #ffffff20;
+  color:#fff;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .2s;font-family:'DM Sans',sans-serif}
+.cart-btn:hover{background:#ffffff25}
+.cart-count{background:var(--acc);color:#fff;border-radius:999px;width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+
+.hero{background:linear-gradient(135deg,var(--dark) 0%,#1a1040 100%);padding:60px 40px;
+  text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,#6d5cff22 0%,transparent 60%)}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:#6d5cff20;
+  border:1px solid #6d5cff40;color:#a78bfa;border-radius:999px;padding:5px 14px;
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;
+  position:relative;z-index:1}
+.hero h1{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#fff;
+  line-height:1.15;letter-spacing:-1.5px;margin-bottom:16px;position:relative;z-index:1}
+.hero h1 span{background:linear-gradient(90deg,var(--acc),#c084fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:#9898c8;font-size:15px;max-width:540px;margin:0 auto 28px;line-height:1.7;
+  position:relative;z-index:1}
+.hero-stats{display:flex;justify-content:center;gap:40px;position:relative;z-index:1}
+.hero-stat-v{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff}
+.hero-stat-l{font-size:10px;color:#6666aa;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+.filters{background:var(--surf);border-bottom:1px solid var(--bord);padding:16px 40px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;
+  letter-spacing:1px;margin-right:6px}
+.filter-chip{background:#f0eeff;border:1.5px solid var(--bord);color:var(--sub);border-radius:8px;
+  padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;
+  font-family:'DM Sans',sans-serif}
+.filter-chip:hover{border-color:var(--acc);color:var(--acc)}
+.filter-chip.active{background:var(--acc);border-color:var(--acc);color:#fff}
+
+.main{display:grid;grid-template-columns:1fr 360px;gap:28px;padding:32px 40px;
+  max-width:1400px;margin:0 auto}
+.products{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-content:start}
+
+.pcard{background:#fff;border:1.5px solid var(--bord);border-radius:18px;padding:24px;
+  position:relative;transition:all .2s}
+.pcard:hover{border-color:#c4b5fd;box-shadow:0 8px 32px #6d5cff12;transform:translateY(-2px)}
+.pcard.in-cart{border-color:var(--grn);background:#f0fdf4}
+.pcard-badge{position:absolute;top:18px;right:18px;font-size:9px;font-weight:800;
+  letter-spacing:.8px;text-transform:uppercase;padding:3px 10px;border-radius:999px;border:1px solid}
+.pcard-icon{font-size:32px;margin-bottom:14px}
+.pcard-cat{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--mut);margin-bottom:6px}
+.pcard-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt);
+  margin-bottom:8px;line-height:1.3}
+.pcard-desc{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:14px}
+.pcard-specs{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.spec-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub)}
+.spec-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.pcard-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px;
+  border-top:1px solid var(--bord);padding-top:14px}
+.pcard-price{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--txt)}
+.pcard-price-sub{font-size:10px;color:var(--mut)}
+.add-btn{display:flex;align-items:center;gap:7px;background:var(--acc);color:#fff;border:none;
+  border-radius:10px;padding:10px 18px;font-size:12px;font-weight:700;cursor:pointer;
+  transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.add-btn:hover{background:#5b4ce8}
+.add-btn.added{background:var(--grn)}
+.add-btn.added:hover{background:#059669}
+
+.pcard-config{background:#f8f6ff;border:1px solid #e0dbff;border-radius:10px;padding:14px;margin-top:12px}
+.config-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--sub);margin-bottom:7px;display:block}
+.config-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:0}
+.config-chip{background:#fff;border:1.5px solid var(--bord);border-radius:6px;
+  padding:4px 10px;font-size:10px;font-weight:600;color:var(--sub);cursor:pointer;
+  transition:all .12s;font-family:'DM Sans',sans-serif}
+.config-chip:hover{border-color:var(--acc);color:var(--acc)}
+.config-chip.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.vol-slider{width:100%;margin-top:8px;accent-color:var(--acc)}
+.vol-display{text-align:right;font-size:11px;color:var(--acc);font-weight:700;margin-top:5px;
+  font-family:'DM Mono',monospace}
+
+.cart-sidebar{position:sticky;top:88px;background:var(--surf);border:1.5px solid var(--bord);
+  border-radius:18px;padding:24px;height:fit-content;max-height:calc(100vh - 120px);overflow-y:auto}
+.cart-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);
+  margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.cart-empty{text-align:center;padding:32px 16px;color:var(--mut);font-size:12px}
+.cart-empty-icon{font-size:36px;margin-bottom:10px}
+.cart-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--bord)}
+.cart-item:last-of-type{border-bottom:none}
+.ci-icon{font-size:22px;flex-shrink:0}
+.ci-info{flex:1}
+.ci-name{font-size:12px;font-weight:700;color:var(--txt)}
+.ci-config{font-size:10px;color:var(--mut);margin-top:2px;font-family:'DM Mono',monospace}
+.ci-price{font-size:13px;font-weight:800;color:var(--acc);margin-top:4px}
+.ci-remove{background:none;border:none;color:var(--mut);cursor:pointer;font-size:16px;
+  transition:color .15s;padding:0}
+.ci-remove:hover{color:var(--red)}
+.cart-summary{border-top:2px solid var(--bord);margin-top:16px;padding-top:16px}
+.sum-row{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:8px}
+.sum-total{display:flex;justify-content:space-between;font-family:'Syne',sans-serif;
+  font-size:16px;font-weight:800;color:var(--txt);margin-top:10px}
+.sum-total span:last-child{color:var(--acc)}
+.checkout-btn{width:100%;background:var(--acc);color:#fff;border:none;border-radius:12px;
+  padding:14px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;
+  font-family:'DM Sans',sans-serif;transition:all .2s}
+.checkout-btn:hover{background:#5b4ce8;transform:translateY(-1px);box-shadow:0 6px 20px #6d5cff30}
+.trust-badges{display:flex;gap:8px;margin-top:12px}
+.trust-badge{flex:1;text-align:center;font-size:9px;color:var(--mut)}
+.trust-badge span{display:block;font-size:16px;margin-bottom:2px}
+
+.overlay{position:fixed;inset:0;background:#000000bb;display:flex;align-items:center;
+  justify-content:center;z-index:500;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surf);border-radius:20px;padding:36px;width:min(560px,92vw);
+  max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .25s;position:relative}
+.overlay.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;
+  font-size:22px;color:var(--mut);cursor:pointer}
+.modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--txt);margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--sub);margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:7px;display:block}
+.form-input{width:100%;border:1.5px solid var(--bord);border-radius:10px;padding:11px 14px;
+  font-size:13px;font-family:'DM Sans',sans-serif;color:var(--txt);background:var(--bg);
+  transition:border-color .15s;outline:none}
+.form-input:focus{border-color:var(--acc)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pay-btn{width:100%;background:linear-gradient(135deg,var(--acc),var(--pur));color:#fff;
+  border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;
+  font-family:'DM Sans',sans-serif;margin-top:8px;transition:all .2s;display:flex;
+  align-items:center;justify-content:center;gap:10px}
+.pay-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px #6d5cff40}
+.pay-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.order-mini{background:var(--bg);border-radius:12px;padding:16px;margin-bottom:20px}
+.order-mini-row{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);padding:4px 0}
+.order-mini-total{border-top:1px solid var(--bord);margin-top:8px;padding-top:10px;
+  font-weight:800;font-size:14px;color:var(--txt);display:flex;justify-content:space-between}
+
+.success-screen{text-align:center;padding:16px 0}
+.success-icon{font-size:56px;margin-bottom:16px;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.5)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--txt);margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--sub);margin-bottom:24px;line-height:1.6}
+.invoice-box{background:var(--bg);border:1px solid var(--bord);border-radius:14px;
+  padding:24px;text-align:left;margin-bottom:20px}
+.inv-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.inv-logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--acc)}
+.inv-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub);text-align:right}
+.inv-table{width:100%;font-size:11px;border-collapse:collapse;margin:12px 0}
+.inv-table th{text-align:left;padding:6px 0;color:var(--mut);font-size:9px;text-transform:uppercase;
+  letter-spacing:.5px;border-bottom:1px solid var(--bord)}
+.inv-table td{padding:7px 0;color:var(--sub);border-bottom:1px solid #f0eeff}
+.inv-table td:first-child{color:var(--txt);font-weight:600}
+.inv-table td:last-child{text-align:right;font-weight:700;color:var(--txt);font-family:'DM Mono',monospace}
+.inv-total-row{display:flex;justify-content:space-between;padding:12px 0 4px;font-weight:800;
+  font-size:14px;border-top:2px solid var(--bord);margin-top:4px}
+.inv-total-row span:last-child{color:var(--acc)}
+.inv-footer{font-size:9px;color:var(--mut);margin-top:14px;text-align:center;line-height:1.7}
+.dl-btn{width:100%;background:var(--dark);color:#fff;border:none;border-radius:12px;
+  padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+.dl-btn:hover{background:#1a1a3e}
+.sec-btn{width:100%;background:none;border:1px solid var(--bord);border-radius:12px;
+  padding:12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--sub);
+  font-family:'DM Sans',sans-serif}
+
+.tag-new{background:#fef3c7;color:#d97706;border-color:#fde68a}
+.tag-pop{background:#ede9fe;color:#7c3aed;border-color:#ddd6fe}
+.tag-hot{background:#fee2e2;color:#dc2626;border-color:#fecaca}
+.tag-b2b{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+
+@media(max-width:1100px){.main{grid-template-columns:1fr}.cart-sidebar{position:static}}
+@media(max-width:768px){.products{grid-template-columns:1fr}.hero h1{font-size:28px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-mark">L</div>
+    <div>
+      <div class="nav-title">L'Étudiant · Data Marketplace</div>
+      <div class="nav-sub">Data Products · RGPD Conforme</div>
+    </div>
+  </div>
+  <button class="cart-btn" onclick="document.getElementById('cart-sidebar').scrollIntoView({behavior:'smooth'})">
+    🛒 Panier <span class="cart-count" id="cart-count">0</span>
+  </button>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">✦ Marketplace B2B · Données certifiées</div>
+  <h1>La donnée étudiante<br><span>la plus qualifiée de France</span></h1>
+  <p>Achetez des data products prêts à activer — segmentés, scorés, conformes RGPD. Livraison sous 24h.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-v">4M+</div><div class="hero-stat-l">Profils inscrits</div></div>
+    <div class="hero-stat"><div class="hero-stat-v">24</div><div class="hero-stat-l">Domaines d'étude</div></div>
+    <div class="hero-stat"><div class="hero-stat-v">100%</div><div class="hero-stat-l">Opt-in vérifié</div></div>
+    <div class="hero-stat"><div class="hero-stat-v">3.5M</div><div class="hero-stat-l">Salons trackés</div></div>
+  </div>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Filtrer</span>
+  <button class="filter-chip active" onclick="filterCat('all',this)">Tous les produits</button>
+  <button class="filter-chip" onclick="filterCat('audience',this)">🎯 Audience Packs</button>
+  <button class="filter-chip" onclick="filterCat('scoring',this)">🏷️ Lead Scoring</button>
+  <button class="filter-chip" onclick="filterCat('barometer',this)">📊 Baromètre</button>
+  <button class="filter-chip" onclick="filterCat('salon',this)">🏛️ No-Shows Salons</button>
+  <button class="filter-chip" onclick="filterCat('b2b',this)">🏫 B2B Intelligence</button>
+</div>
+
+<div class="main">
+  <div class="products" id="products-grid"></div>
+  <div class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-title">
+      🛒 Mon panier
+      <span style="font-size:11px;font-weight:400;color:var(--mut)" id="cart-label"></span>
+    </div>
+    <div id="cart-items">
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        Votre panier est vide.<br>Ajoutez un produit pour commencer.
+      </div>
+    </div>
+    <div id="cart-summary" style="display:none">
+      <div class="cart-summary">
+        <div class="sum-row"><span>Sous-total HT</span><span id="sum-ht">—</span></div>
+        <div class="sum-row"><span>TVA (20%)</span><span id="sum-tva">—</span></div>
+        <div class="sum-total"><span>Total TTC</span><span id="sum-ttc">—</span></div>
+        <button class="checkout-btn" onclick="openCheckout()">💳 Procéder au paiement</button>
+        <div class="trust-badges">
+          <div class="trust-badge"><span>🔒</span>SSL sécurisé</div>
+          <div class="trust-badge"><span>✅</span>RGPD conforme</div>
+          <div class="trust-badge"><span>⚡</span>Livraison 24h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="overlay" id="ov-checkout" onclick="if(event.target===this)closeModal('ov-checkout')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('ov-checkout')">✕</button>
+    <div id="checkout-body"></div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="overlay" id="ov-success">
+  <div class="modal">
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Commande confirmée !</div>
+      <div class="success-sub">Votre facture a été générée.<br>Vos données seront livrées sous 24h par email.</div>
+      <div class="invoice-box" id="invoice-box"></div>
+      <button class="dl-btn" onclick="printInvoice()">⬇️ Télécharger la facture</button>
+      <button class="sec-btn" onclick="closeSuccess()">Continuer mes achats</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var PRODUCTS = [
+  {
+    id:'aud_std', cat:'audience', icon:'🎯',
+    badge:{text:'Populaire',cls:'tag-pop'},
+    catLabel:'Audience Pack', title:'Audience Pack Standard',
+    desc:"Segment prêt à activer filtré par niveau, domaine et région. Opt-in commercial vérifié. Livré CSV chiffré.",
+    specs:[
+      {dot:'#6d5cff',text:'Opt-in commercial vérifié'},
+      {dot:'#22e584',text:'Filtres : niveau × domaine × région'},
+      {dot:'#ffb830',text:'Fraîcheur garantie < 6 mois'},
+      {dot:'#00d4e8',text:'CSV + brief usage inclus'}
+    ],
+    type:'volume', basePrice:0.08, unit:'/ contact',
+    domains:['Commerce','Digital','Santé','Droit','Arts','Sport'],
+    niveaux:['Lycéen (2nde-Term.)','Post-bac (Bac+1/+2)','Supérieur (Bac+3+)'],
+    regions:['Île-de-France','AURA','PACA','Bretagne','Occitanie','National'],
+    minVol:1000, maxVol:50000, defVol:10000
+  },
+  {
+    id:'aud_prem', cat:'audience', icon:'💎',
+    badge:{text:'Premium',cls:'tag-hot'},
+    catLabel:'Audience Pack', title:'Audience Pack Premium',
+    desc:"Pack enrichi avec score fraîcheur, email + téléphone opt-in, et profil CSP foyer. Grade A uniquement.",
+    specs:[
+      {dot:'#ff4d6d',text:'Grade A uniquement (score ≥ 75)'},
+      {dot:'#6d5cff',text:'Email + téléphone opt-in'},
+      {dot:'#ffb830',text:'Enrichi CSP + données foyer'},
+      {dot:'#22e584',text:'Note conformité RGPD incluse'}
+    ],
+    type:'volume', basePrice:0.20, unit:'/ contact',
+    domains:['Commerce','Digital','Santé','Droit'],
+    niveaux:['Terminale','Bac+1','Bac+2'],
+    regions:['Île-de-France','AURA','PACA','National'],
+    minVol:500, maxVol:20000, defVol:2000
+  },
+  {
+    id:'leads_abc', cat:'scoring', icon:'🏷️',
+    badge:{text:'Nouveau',cls:'tag-new'},
+    catLabel:'Lead Scoring', title:'Pack Leads Scorés A/B/C',
+    desc:"Chaque profil scoré sur 4 dimensions. Prix différenciés : €15 (A), €10 (B), €5 (C) par lead.",
+    specs:[
+      {dot:'#22e584',text:'Grade A — Hot : 15 € / lead'},
+      {dot:'#ffb830',text:'Grade B — Warm : 10 € / lead'},
+      {dot:'#ff4d6d',text:'Grade C — Cold : 5 € / lead'},
+      {dot:'#6d5cff',text:'Score détaillé par dimension fourni'}
+    ],
+    type:'grade',
+    grades:[
+      {key:'A',label:'Grade A — Hot',price:15,color:'#22e584'},
+      {key:'B',label:'Grade B — Warm',price:10,color:'#ffb830'},
+      {key:'C',label:'Grade C — Cold',price:5,color:'#ff4d6d'}
+    ],
+    minVol:50, maxVol:2000, defVol:200
+  },
+  {
+    id:'baro', cat:'barometer', icon:'📊',
+    badge:{text:'Abonnement',cls:'tag-pop'},
+    catLabel:'Baromètre Orientation', title:'Baromètre Orientation',
+    desc:"Rapport d'intelligence de marché mensuel/trimestriel sur les tendances d'orientation. Dashboard PowerBI live en Premium.",
+    specs:[
+      {dot:'#6d5cff',text:'5+ insights actualisés chaque mois'},
+      {dot:'#9b6dff',text:'Dashboard PowerBI filtrable (Premium)'},
+      {dot:'#22e584',text:'Données anonymisées · RGPD'},
+      {dot:'#ffb830',text:'PDF trimestriel ou live selon formule'}
+    ],
+    type:'plan',
+    plans:[
+      {key:'std',label:'Standard — Rapport PDF trimestriel',price:5000,period:'/an'},
+      {key:'prem',label:'Premium — Dashboard PowerBI live',price:15000,period:'/an'}
+    ]
+  },
+  {
+    id:'noshows', cat:'salon', icon:'🔔',
+    badge:{text:'Nouveau',cls:'tag-new'},
+    catLabel:'No-Shows Salons', title:'Pack No-Shows Salon',
+    desc:"Après chaque salon L'Étudiant, liste scorée des inscrits absents avec signaux d'intention J-7.",
+    specs:[
+      {dot:'#ff4d6d',text:'~12 800 no-shows par salon'},
+      {dot:'#6d5cff',text:'Scoré par intention pré-salon'},
+      {dot:'#22e584',text:'Opt-in commercial vérifié'},
+      {dot:'#ffb830',text:'Livraison 48h post-salon'}
+    ],
+    type:'salon', flatPrice:2000,
+    salons:['Paris — Nov 2025','Lyon — Jan 2026','Bordeaux — Fév 2026','Marseille — Mar 2026','Nantes — Avr 2026']
+  },
+  {
+    id:'b2b_reg', cat:'b2b', icon:'🏫',
+    badge:{text:'B2B',cls:'tag-b2b'},
+    catLabel:'B2B Intelligence', title:'Rapport B2B Région',
+    desc:"Pack démographique région enrichi INSEE + statistiques académiques. Portrait de la demande étudiante par bassin.",
+    specs:[
+      {dot:'#10b981',text:'Enrichi INSEE · données DEPP'},
+      {dot:'#6d5cff',text:'Indice tension formation / demande'},
+      {dot:'#ffb830',text:'Rapport PDF + données brutes CSV'},
+      {dot:'#9b6dff',text:'Cible : rectorats, conseils régionaux'}
+    ],
+    type:'region',
+    regionPacks:[
+      {key:'idf',label:'Île-de-France',price:12000},
+      {key:'aura',label:'Auvergne-Rhône-Alpes',price:10000},
+      {key:'paca',label:"Provence-Alpes-Côte d'Azur",price:9000},
+      {key:'occ',label:'Occitanie',price:8500},
+      {key:'na',label:'Nouvelle-Aquitaine',price:8500},
+      {key:'all',label:'🗺️ Pack National (13 régions)',price:25000}
+    ]
+  }
+];
+
+// STATE
+var cart = [];
+var cfg = {};
+var currentCat = 'all';
+var orderInfo = {};
+var INV = 'LE-' + new Date().getFullYear() + '-' + (Math.floor(Math.random()*9000)+1000);
+
+PRODUCTS.forEach(function(p){
+  cfg[p.id] = {
+    vol: p.defVol || 200,
+    grade: p.grades ? p.grades[0].key : null,
+    plan: p.plans ? p.plans[0].key : null,
+    salon: p.salons ? p.salons[0] : null,
+    region: p.regionPacks ? p.regionPacks[0].key : null,
+    domain: p.domains ? p.domains[0] : null,
+    niveau: p.niveaux ? p.niveaux[0] : null,
+    reg: p.regions ? p.regions[0] : null
+  };
+});
+
+// PRICE
+function calcPrice(p){
+  var c=cfg[p.id];
+  if(p.type==='volume') return Math.round(p.basePrice * c.vol);
+  if(p.type==='grade'){
+    var g=p.grades.find(function(g){return g.key===c.grade;});
+    return Math.round((g?g.price:10)*c.vol);
+  }
+  if(p.type==='plan'){
+    var pl=p.plans.find(function(pl){return pl.key===c.plan;});
+    return pl?pl.price:0;
+  }
+  if(p.type==='salon') return p.flatPrice||2000;
+  if(p.type==='region'){
+    var rp=p.regionPacks.find(function(r){return r.key===c.region;});
+    return rp?rp.price:0;
+  }
+  return 0;
+}
+
+function priceLabel(p){
+  var c=cfg[p.id], price=calcPrice(p);
+  if(p.type==='volume') return '€'+(price>=1000?(price/1000).toFixed(1)+'k':price)+' HT';
+  if(p.type==='grade'){
+    var g=p.grades.find(function(g){return g.key===c.grade;});
+    return '€'+(g?g.price:10)+' / lead';
+  }
+  if(p.type==='plan'){
+    var pl=p.plans.find(function(pl){return pl.key===c.plan;});
+    return '€'+(pl?pl.price.toLocaleString('fr-FR'):0)+(pl?pl.period:'');
+  }
+  if(p.type==='salon') return '€'+(p.flatPrice||2000).toLocaleString('fr-FR')+' flat';
+  if(p.type==='region'){
+    var rp=p.regionPacks.find(function(r){return r.key===c.region;});
+    return '€'+(rp?rp.price.toLocaleString('fr-FR'):0);
+  }
+  return '—';
+}
+
+function cfgLabel(p){
+  var c=cfg[p.id], parts=[];
+  if(p.type==='volume'||p.type==='grade'){
+    if(c.domain) parts.push(c.domain);
+    if(c.niveau) parts.push(c.niveau);
+    if(c.reg) parts.push(c.reg);
+    if(p.type==='grade'){
+      var g=p.grades.find(function(g){return g.key===c.grade;});
+      if(g) parts.push(g.label);
+    }
+    parts.push(c.vol.toLocaleString('fr-FR')+(p.type==='grade'?' leads':' contacts'));
+  } else if(p.type==='plan'){
+    var pl=p.plans.find(function(pl){return pl.key===c.plan;});
+    if(pl) parts.push(pl.label);
+  } else if(p.type==='salon'){
+    if(c.salon) parts.push(c.salon);
+  } else if(p.type==='region'){
+    var rp=p.regionPacks.find(function(r){return r.key===c.region;});
+    if(rp) parts.push(rp.label);
+  }
+  return parts.join(' · ');
+}
+
+// RENDER
+function renderProducts(){
+  var list = currentCat==='all' ? PRODUCTS : PRODUCTS.filter(function(p){return p.cat===currentCat;});
+  document.getElementById('products-grid').innerHTML = list.map(buildCard).join('');
+}
+
+function buildCard(p){
+  var inCart=cart.some(function(i){return i.id===p.id;}), c=cfg[p.id];
+  var badge = p.badge ? '<span class="pcard-badge '+p.badge.cls+'">'+p.badge.text+'</span>' : '';
+  var specs = p.specs.map(function(s){
+    return '<div class="spec-row"><span class="spec-dot" style="background:'+s.dot+'"></span>'+s.text+'</div>';
+  }).join('');
+  return '<div class="pcard'+(inCart?' in-cart':'')+'" id="card-'+p.id+'">'+
+    badge+
+    '<div class="pcard-icon">'+p.icon+'</div>'+
+    '<div class="pcard-cat">'+p.catLabel+'</div>'+
+    '<div class="pcard-title">'+p.title+'</div>'+
+    '<div class="pcard-desc">'+p.desc+'</div>'+
+    '<div class="pcard-specs">'+specs+'</div>'+
+    buildCfg(p)+
+    '<div class="pcard-bottom">'+
+      '<div><div class="pcard-price" id="dp-'+p.id+'">'+priceLabel(p)+'</div>'+
+      '<div class="pcard-price-sub">'+(p.unit||'')+'</div></div>'+
+      '<button class="add-btn'+(inCart?' added':'')+'" onclick="toggleCart(\''+p.id+'\')">'+
+        (inCart?'✓ Dans le panier':'+ Ajouter')+
+      '</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function buildCfg(p){
+  var c=cfg[p.id], h='<div class="pcard-config">';
+  if(p.type==='volume'){
+    if(p.domains){
+      h+='<span class="config-label">Domaine</span><div class="config-chips" style="margin-bottom:10px">';
+      p.domains.forEach(function(d){
+        h+='<button class="config-chip'+(c.domain===d?' sel':'')+'" onclick="sc(\''+p.id+'\',\'domain\',\''+d+'\')">'+d+'</button>';
+      });
+      h+='</div>';
+    }
+    if(p.niveaux){
+      h+='<span class="config-label">Niveau</span><div class="config-chips" style="margin-bottom:10px">';
+      p.niveaux.forEach(function(n){
+        h+='<button class="config-chip'+(c.niveau===n?' sel':'')+'" onclick="sc(\''+p.id+'\',\'niveau\',\''+n+'\')">'+n+'</button>';
+      });
+      h+='</div>';
+    }
+    if(p.regions){
+      h+='<span class="config-label">Région</span><div class="config-chips" style="margin-bottom:10px">';
+      p.regions.forEach(function(r){
+        h+='<button class="config-chip'+(c.reg===r?' sel':'')+'" onclick="sc(\''+p.id+'\',\'reg\',\''+r+'\')">'+r+'</button>';
+      });
+      h+='</div>';
+    }
+    h+='<span class="config-label">Volume</span>'+
+      '<input type="range" class="vol-slider" min="'+p.minVol+'" max="'+p.maxVol+'" step="500" value="'+c.vol+'" oninput="sv(\''+p.id+'\',this.value)">'+
+      '<div class="vol-display" id="vd-'+p.id+'">'+c.vol.toLocaleString('fr-FR')+' contacts → '+(calcPrice(p)/1000).toFixed(2)+'k €</div>';
+  }
+  else if(p.type==='grade'){
+    h+='<span class="config-label">Grade</span><div class="config-chips" style="margin-bottom:10px">';
+    p.grades.forEach(function(g){
+      var st=c.grade===g.key?' style="background:'+g.color+';border-color:'+g.color+';color:#fff"':'';
+      h+='<button class="config-chip'+(c.grade===g.key?' sel':'')+'"'+st+' onclick="sc(\''+p.id+'\',\'grade\',\''+g.key+'\')">'+g.label+'</button>';
+    });
+    h+='</div>'+
+      '<span class="config-label">Nombre de leads</span>'+
+      '<input type="range" class="vol-slider" min="'+p.minVol+'" max="'+p.maxVol+'" step="10" value="'+c.vol+'" oninput="sv(\''+p.id+'\',this.value)">'+
+      '<div class="vol-display" id="vd-'+p.id+'">'+c.vol.toLocaleString('fr-FR')+' leads → '+calcPrice(p).toLocaleString('fr-FR')+' €</div>';
+  }
+  else if(p.type==='plan'){
+    h+='<span class="config-label">Formule</span><div style="display:flex;flex-direction:column;gap:8px">';
+    p.plans.forEach(function(pl){
+      h+='<button class="config-chip'+(c.plan===pl.key?' sel':'')+'" style="text-align:left;padding:10px 14px;width:100%" onclick="sc(\''+p.id+'\',\'plan\',\''+pl.key+'\')">'+
+        pl.label+' — <strong>€'+pl.price.toLocaleString('fr-FR')+pl.period+'</strong></button>';
+    });
+    h+='</div>';
+  }
+  else if(p.type==='salon'){
+    h+='<span class="config-label">Salon</span><div class="config-chips">';
+    p.salons.forEach(function(s,i){
+      h+='<button class="config-chip'+(c.salon===s?' sel':'')+'" onclick="sc(\''+p.id+'\',\'salon\',\'__S'+i+'\')">'+s+'</button>';
+    });
+    h+='</div>';
+  }
+  else if(p.type==='region'){
+    h+='<span class="config-label">Région</span><div style="display:flex;flex-direction:column;gap:6px">';
+    p.regionPacks.forEach(function(r){
+      h+='<button class="config-chip'+(c.region===r.key?' sel':'')+'" style="text-align:left;display:flex;justify-content:space-between;padding:8px 12px;width:100%" onclick="sc(\''+p.id+'\',\'region\',\''+r.key+'\')">'+
+        '<span>'+r.label+'</span><strong>€'+r.price.toLocaleString('fr-FR')+'</strong></button>';
+    });
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+
+// INTERACTIONS
+function sc(id,key,val){
+  // Handle salon index encoding
+  if(val.indexOf('__S')===0){
+    var idx=parseInt(val.replace('__S',''));
+    var p=PRODUCTS.find(function(p){return p.id===id;});
+    if(p&&p.salons) val=p.salons[idx];
+  }
+  cfg[id][key]=val;
+  updateCartItem(id);
+  renderProducts();
+}
+
+function sv(id,val){
+  cfg[id].vol=parseInt(val);
+  updateCartItem(id);
+  var p=PRODUCTS.find(function(p){return p.id===id;});
+  if(!p) return;
+  var el=document.getElementById('vd-'+id);
+  if(el){
+    if(p.type==='volume') el.innerHTML=parseInt(val).toLocaleString('fr-FR')+' contacts → '+(calcPrice(p)/1000).toFixed(2)+'k €';
+    else if(p.type==='grade') el.innerHTML=parseInt(val).toLocaleString('fr-FR')+' leads → '+calcPrice(p).toLocaleString('fr-FR')+' €';
+  }
+  var dp=document.getElementById('dp-'+id);
+  if(dp) dp.textContent=priceLabel(p);
+}
+
+function updateCartItem(id){
+  var idx=-1;
+  for(var i=0;i<cart.length;i++){if(cart[i].id===id){idx=i;break;}}
+  if(idx<0) return;
+  var p=PRODUCTS.find(function(p){return p.id===id;});
+  cart[idx].price=calcPrice(p);
+  cart[idx].config=cfgLabel(p);
+  renderCart();
+}
+
+function toggleCart(id){
+  var p=PRODUCTS.find(function(p){return p.id===id;});
+  if(!p) return;
+  var idx=-1;
+  for(var i=0;i<cart.length;i++){if(cart[i].id===id){idx=i;break;}}
+  if(idx>=0) cart.splice(idx,1);
+  else cart.push({id:p.id,icon:p.icon,title:p.title,price:calcPrice(p),config:cfgLabel(p)});
+  renderCart();
+  renderProducts();
+}
+
+function removeFromCart(id){
+  cart=cart.filter(function(i){return i.id!==id;});
+  renderCart();
+  renderProducts();
+}
+
+function renderCart(){
+  var n=cart.length;
+  document.getElementById('cart-count').textContent=n;
+  document.getElementById('cart-label').textContent=n>0?n+' article'+(n>1?'s':''):'';
+  var itemsEl=document.getElementById('cart-items');
+  var sumEl=document.getElementById('cart-summary');
+  if(n===0){
+    itemsEl.innerHTML='<div class="cart-empty"><div class="cart-empty-icon">🛒</div>Votre panier est vide.<br>Ajoutez un produit pour commencer.</div>';
+    sumEl.style.display='none';
+    return;
+  }
+  var ht=cart.reduce(function(s,i){return s+i.price;},0);
+  var tva=Math.round(ht*.2);
+  var ttc=ht+tva;
+  itemsEl.innerHTML=cart.map(function(item){
+    return '<div class="cart-item">'+
+      '<div class="ci-icon">'+item.icon+'</div>'+
+      '<div class="ci-info">'+
+        '<div class="ci-name">'+item.title+'</div>'+
+        '<div class="ci-config">'+item.config+'</div>'+
+        '<div class="ci-price">€'+item.price.toLocaleString('fr-FR')+' HT</div>'+
+      '</div>'+
+      '<button class="ci-remove" onclick="removeFromCart(\''+item.id+'\')">✕</button>'+
+    '</div>';
+  }).join('');
+  document.getElementById('sum-ht').textContent='€'+ht.toLocaleString('fr-FR');
+  document.getElementById('sum-tva').textContent='€'+tva.toLocaleString('fr-FR');
+  document.getElementById('sum-ttc').textContent='€'+ttc.toLocaleString('fr-FR');
+  sumEl.style.display='block';
+}
+
+// FILTERS
+function filterCat(cat,el){
+  currentCat=cat;
+  document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  renderProducts();
+}
+
+// CHECKOUT
+function openCheckout(){
+  if(cart.length===0) return;
+  var ht=cart.reduce(function(s,i){return s+i.price;},0);
+  var tva=Math.round(ht*.2);
+  var ttc=ht+tva;
+  var rows=cart.map(function(i){
+    return '<div class="order-mini-row"><span>'+i.icon+' '+i.title+'</span><span>€'+i.price.toLocaleString('fr-FR')+'</span></div>';
+  }).join('');
+  document.getElementById('checkout-body').innerHTML=
+    '<div class="modal-title">💳 Paiement sécurisé</div>'+
+    '<div class="modal-sub">Données chiffrées · Facture générée immédiatement</div>'+
+    '<div class="order-mini">'+rows+
+      '<div class="order-mini-total"><span>Total TTC</span><span style="color:var(--acc)">€'+ttc.toLocaleString('fr-FR')+'</span></div>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Facturation</div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="f1" placeholder="Marie"></div>'+
+      '<div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="f2" placeholder="Dupont"></div>'+
+    '</div>'+
+    '<div class="form-group"><label class="form-label">Email professionnel</label><input class="form-input" id="f3" type="email" placeholder="m.dupont@ecole.fr"></div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label class="form-label">Établissement</label><input class="form-input" id="f4" placeholder="École de Commerce Paris"></div>'+
+      '<div class="form-group"><label class="form-label">SIRET (optionnel)</label><input class="form-input" id="f5" placeholder="123 456 789 00012"></div>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 14px">Carte bancaire</div>'+
+    '<div class="form-group"><label class="form-label">Numéro</label>'+
+      '<input class="form-input" id="f6" placeholder="4242 4242 4242 4242" maxlength="19" oninput="var v=this.value.replace(/\\D/g,\'\').substring(0,16);this.value=v.replace(/(.{4})/g,\'$1 \').trim()"></div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label class="form-label">Expiration</label><input class="form-input" id="f7" placeholder="MM/AA" maxlength="5"></div>'+
+      '<div class="form-group"><label class="form-label">CVV</label><input class="form-input" id="f8" placeholder="123" maxlength="3" type="password"></div>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--mut);margin-bottom:16px">🔒 Paiement SSL · Aucune donnée carte stockée</div>'+
+    '<button class="pay-btn" id="paybtn" onclick="processPay('+ttc+')">🔒 Payer €'+ttc.toLocaleString('fr-FR')+' TTC</button>';
+  document.getElementById('ov-checkout').classList.add('open');
+}
+
+function processPay(ttc){
+  var p1=document.getElementById('f1').value.trim();
+  var p2=document.getElementById('f2').value.trim();
+  var p3=document.getElementById('f3').value.trim();
+  var p4=document.getElementById('f4').value.trim();
+  var p5=document.getElementById('f5').value.trim();
+  var p6=document.getElementById('f6').value.replace(/\s/g,'');
+  var p7=document.getElementById('f7').value.trim();
+  var p8=document.getElementById('f8').value.trim();
+  if(!p1||!p2||!p3||!p4){alert('Remplissez tous les champs obligatoires.');return;}
+  if(p6.length<16){alert('Numéro de carte invalide.');return;}
+  if(!p7||!p8){alert('Expiration et CVV requis.');return;}
+  orderInfo={prenom:p1,nom:p2,email:p3,soc:p4,siret:p5};
+  var btn=document.getElementById('paybtn');
+  if(btn){btn.textContent='⟳ Traitement en cours...';btn.disabled=true;}
+  setTimeout(function(){closeModal('ov-checkout');showSuccess();},1800);
+}
+
+function showSuccess(){
+  var ht=cart.reduce(function(s,i){return s+i.price;},0);
+  var tva=Math.round(ht*.2),ttc=ht+tva;
+  var d=new Date(),ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var dd=new Date(Date.now()+30*864e5).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var rows=cart.map(function(i){
+    return '<tr><td>'+i.icon+' '+i.title+'</td><td style="font-size:9px;color:#a0a0c0;font-family:monospace">'+i.config+'</td><td>€'+i.price.toLocaleString('fr-FR')+'</td></tr>';
+  }).join('');
+  document.getElementById('invoice-box').innerHTML=
+    '<div class="inv-hdr">'+
+      '<div><div class="inv-logo">L\'ÉTUDIANT</div><div style="font-size:10px;color:#6b6b9a;margin-top:3px">Data Marketplace</div></div>'+
+      '<div class="inv-num"><strong style="font-size:13px;color:#1a1a3e;display:block;font-weight:800">FACTURE</strong>'+INV+'<br>Émise le '+ds+'<br>Échéance '+dd+'</div>'+
+    '</div>'+
+    '<div style="margin-bottom:14px;font-size:12px">'+
+      '<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a0a0c0;margin-bottom:4px">Facturé à</div>'+
+      '<strong>'+orderInfo.prenom+' '+orderInfo.nom+'</strong><br>'+
+      '<span style="color:#6b6b9a">'+orderInfo.soc+'</span><br>'+
+      (orderInfo.siret?'<span style="font-size:10px;color:#a0a0c0">SIRET: '+orderInfo.siret+'</span><br>':'')+
+      '<span style="color:#6b6b9a">'+orderInfo.email+'</span>'+
+    '</div>'+
+    '<table class="inv-table"><thead><tr><th>Produit</th><th>Config</th><th style="text-align:right">HT</th></tr></thead>'+
+    '<tbody>'+rows+
+      '<tr><td colspan="2" style="color:#a0a0c0;padding-top:10px">Sous-total HT</td><td style="padding-top:10px">€'+ht.toLocaleString('fr-FR')+'</td></tr>'+
+      '<tr><td colspan="2" style="color:#a0a0c0">TVA 20%</td><td>€'+tva.toLocaleString('fr-FR')+'</td></tr>'+
+    '</tbody></table>'+
+    '<div class="inv-total-row"><span>Total TTC</span><span>€'+ttc.toLocaleString('fr-FR')+'</span></div>'+
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-top:14px;font-size:10px;color:#166534">'+
+      '📦 Livraison sous 24h à '+orderInfo.email+' · CSV chiffré AES-256 + note RGPD'+
+    '</div>'+
+    '<div class="inv-footer">L\'Étudiant SAS — RCS Nanterre B 337 946 000 — TVA FR 43 337 946 000</div>';
+  document.getElementById('ov-success').classList.add('open');
+}
+
+function printInvoice(){
+  var ht=cart.reduce(function(s,i){return s+i.price;},0);
+  var tva=Math.round(ht*.2),ttc=ht+tva;
+  var ds=new Date().toLocaleDateString('fr-FR');
+  var rows=cart.map(function(i){
+    return '<tr><td>'+i.icon+' '+i.title+'</td><td style="color:#999;font-size:10px">'+i.config+'</td><td style="text-align:right;font-weight:700">€'+i.price.toLocaleString('fr-FR')+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facture '+INV+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1a1a3e;padding:40px;max-width:700px;margin:0 auto}'+
+    'h1{font-size:24px;color:#6d5cff}table{width:100%;border-collapse:collapse;margin:20px 0}'+
+    'th{background:#f0eeff;padding:8px;text-align:left;font-size:10px;text-transform:uppercase}'+
+    'td{padding:9px 8px;border-bottom:1px solid #e8e6f8}.tot{font-weight:800;border-top:2px solid #6d5cff;color:#6d5cff}'+
+    '.footer{margin-top:40px;font-size:10px;color:#a0a0c0;text-align:center;border-top:1px solid #e8e6f8;padding-top:16px}'+
+    '.green{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:12px;margin-top:20px;font-size:11px;color:#166534}</style></head><body>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:30px">'+
+      '<div><h1>L\'ÉTUDIANT</h1><div style="color:#6b6b9a;font-size:11px">Data Marketplace · 149 rue Anatole France, 92300 Levallois-Perret</div></div>'+
+      '<div style="text-align:right"><strong style="font-size:16px">FACTURE '+INV+'</strong><br><span style="color:#6b6b9a">Émise le '+ds+' · Échéance 30j</span></div>'+
+    '</div>'+
+    '<div style="margin-bottom:24px"><strong>Facturé à :</strong><br>'+orderInfo.prenom+' '+orderInfo.nom+'<br>'+orderInfo.soc+'<br>'+(orderInfo.siret?'SIRET: '+orderInfo.siret+'<br>':'')+orderInfo.email+'</div>'+
+    '<table><tr><th>Produit</th><th>Configuration</th><th style="text-align:right">Montant HT</th></tr>'+rows+
+      '<tr><td colspan="2">Sous-total HT</td><td style="text-align:right">€'+ht.toLocaleString('fr-FR')+'</td></tr>'+
+      '<tr><td colspan="2">TVA (20%)</td><td style="text-align:right">€'+tva.toLocaleString('fr-FR')+'</td></tr>'+
+      '<tr class="tot"><td colspan="2">TOTAL TTC</td><td style="text-align:right">€'+ttc.toLocaleString('fr-FR')+'</td></tr>'+
+    '</table>'+
+    '<div class="green">📦 <strong>Livraison sous 24h</strong> à '+orderInfo.email+'<br>CSV chiffré AES-256 + note de conformité RGPD + DPA signé</div>'+
+    '<div class="footer">L\'Étudiant SAS — RCS Nanterre B 337 946 000 — TVA FR 43 337 946 000<br>Données certifiées conformes RGPD · Opt-in commercial vérifié</div>'+
+    '<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
+}
+
+function closeSuccess(){
+  document.getElementById('ov-success').classList.remove('open');
+  cart=[];
+  renderCart();
+  renderProducts();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// INIT
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>

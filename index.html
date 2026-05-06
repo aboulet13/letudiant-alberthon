@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>L'Étudiant · Data Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0B0F19; color: white; }
+        .card { background: #151623; border: 1px solid #232436; border-radius: 16px; padding: 24px; }
+        .tab-active { border-bottom: 2px solid #6366f1; color: white; font-weight: bold; }
+        .tab-inactive { color: #6b7280; }
+        .tab-inactive:hover { color: #d1d5db; }
+        .bg-bar-0 { background: #6366f1; } .bg-bar-1 { background: #a855f7; } .bg-bar-2 { background: #ec4899; } .bg-bar-3 { background: #10b981; } .bg-bar-4 { background: #f59e0b; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .baro-chip { background: #1c1c35; border: 1.5px solid #1c1c35; color: #9898b8; border-radius: 8px; padding: 6px 14px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .baro-chip:hover { border-color: #6366f1; color: #6366f1; }
+        .baro-chip.on { background: #6366f1; border-color: #6366f1; color: white; }
+        .baro-chip-amb.on { background: #f59e0b; border-color: #f59e0b; color: black; }
+    </style>
+</head>
+<body class="min-h-screen pb-12 relative">
+
+    <header class="border-b border-gray-800 pt-6 px-8 bg-[#0a0a0f]">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/20">L</div>
+                <div><h1 class="text-xl font-bold leading-tight">L'Étudiant · Data Analytics</h1><p class="text-[10px] text-gray-500 tracking-widest uppercase">letudiant-data-prod · Hacka_024 · Données Sandbox</p></div>
+            </div>
+            <div class="flex gap-4 items-center text-xs font-semibold">
+                <span class="bg-green-950 text-green-400 border border-green-900 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span> BigQuery connecté
+                </span>
+                <button class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-lg text-white font-bold transition-all">↻ Actualiser</button>
+            </div>
+        </div>
+        <nav class="flex gap-8 text-sm">
+            <button onclick="switchTab('overview')" id="tab-overview" class="pb-3 tab-active flex items-center gap-2 transition-colors">📊 Vue d'ensemble</button>
+            <button onclick="switchTab('baro')" id="tab-baro" class="pb-3 tab-inactive flex items-center gap-2 transition-colors text-yellow-500">🧭 Baromètre</button>
+            <button onclick="switchTab('audience')" id="tab-audience" class="pb-3 tab-inactive flex items-center gap-2 transition-colors">🎯 Audience</button>
+            <button onclick="switchTab('scoring')" id="tab-scoring" class="pb-3 tab-inactive flex items-center gap-2 transition-colors">📈 Lead Scoring</button>
+            <button onclick="switchTab('crm')" id="tab-crm" class="pb-3 tab-inactive flex items-center gap-2 transition-colors">📬 CRM & Salons</button>
+            <button onclick="switchTab('config')" id="tab-config" class="pb-3 tab-inactive flex items-center gap-2 transition-colors">🛒 Configuration & Achat</button>
+        </nav>
+    </header>
+
+    <main class="p-8 max-w-[1400px] mx-auto">
+        
+        <!-- ONGLETS 1, 3, 4, 5... -->
+        <div id="view-overview" class="space-y-6"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="card border-t-2 border-t-blue-500"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Profils Inscrits</p><h2 id="kpi-profils" class="text-4xl font-black mb-1">...</h2><p class="text-xs text-gray-400">Total inscrits sur le site</p></div><div class="card border-t-2 border-t-purple-500"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Utilisateurs ORI</p><h2 id="kpi-ori" class="text-4xl font-black mb-1">...</h2><p class="text-xs text-gray-400">Ont communiqué avec l'agent</p></div><div class="card border-t-2 border-t-green-500"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Opt-in Commercial</p><h2 id="kpi-optin" class="text-4xl font-black mb-1">...</h2><p class="text-xs text-gray-400">Base monétisable</p></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="card lg:col-span-2"><h3 class="text-sm font-bold mb-1">📈 Messages ORI par mois</h3><canvas id="oriChart" height="100"></canvas></div><div class="card"><h3 class="text-sm font-bold mb-1">🏆 Top domaines</h3><div id="top-domaines-container" class="space-y-4 mt-4"></div></div></div></div>
+
+        <!-- ========================================== -->
+        <!-- ONGLET BAROMÈTRE (Purifié du faux code JS) -->
+        <!-- ========================================== -->
+        <div id="view-baro" class="hidden space-y-6 relative">
+            
+            <!-- OVERLAY DE CHARGEMENT RÉEL SQL -->
+            <div id="baro-loader" class="absolute inset-0 bg-[#0B0F19]/80 backdrop-blur-sm z-50 flex items-center justify-center hidden rounded-2xl">
+                <div class="text-indigo-400 font-bold flex flex-col items-center gap-4">
+                    <span class="animate-spin text-4xl">⏳</span>
+                    <span>Exécution de la jointure sur PostgreSQL...</span>
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="bg-gradient-to-br from-[#0a0816] to-[#12082a] border border-[#3a1f6e] rounded-2xl p-8 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_30%_50%,#6d5cff_0%,transparent_60%)]"></div>
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/40 text-yellow-500 rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-wider mb-4">
+                        📊 Baromètre Orientation · Calculé en temps réel
+                    </div>
+                    <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Tendances d'orientation étudiante</h2>
+                    <p class="text-sm text-gray-400 max-w-2xl">Visualisez la demande d'orientation et la qualité de la base. Les filtres déclenchent de véritables requêtes SQL sur votre base locale.</p>
+                </div>
+            </div>
+
+            <!-- Filtres (Envoient des requêtes POST) -->
+            <div class="flex flex-wrap gap-8 mb-4">
+                <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Période</span>
+                    <div class="flex flex-wrap gap-2" id="filter-period">
+                        <button class="baro-chip baro-chip-amb on" onclick="setBaroFilter('period','all',this)">Toute la période</button>
+                        <button class="baro-chip baro-chip-amb" onclick="setBaroFilter('period','q1',this)">Rentrée (Sep–Nov)</button>
+                        <button class="baro-chip baro-chip-amb" onclick="setBaroFilter('period','q2',this)">Parcoursup (Déc–Fév)</button>
+                        <button class="baro-chip baro-chip-amb" onclick="setBaroFilter('period','q3',this)">Printemps (Mar–Avr)</button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Domaine étude</span>
+                    <div class="flex flex-wrap gap-2" id="filter-domain">
+                        <button class="baro-chip on" onclick="setBaroFilter('domain','all',this)">Tous</button>
+                        <button class="baro-chip" onclick="setBaroFilter('domain','commerce',this)">Commerce</button>
+                        <button class="baro-chip" onclick="setBaroFilter('domain','digital',this)">Digital</button>
+                        <button class="baro-chip" onclick="setBaroFilter('domain','sante',this)">Santé</button>
+                        <button class="baro-chip" onclick="setBaroFilter('domain','droit',this)">Droit</button>
+                        <button class="baro-chip" onclick="setBaroFilter('domain','arts',this)">Arts</button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Niveau scolaire</span>
+                    <div class="flex flex-wrap gap-2" id="filter-level">
+                        <button class="baro-chip on" onclick="setBaroFilter('level','all',this)">Tous</button>
+                        <button class="baro-chip" onclick="setBaroFilter('level','lycee',this)">Lycéen</button>
+                        <button class="baro-chip" onclick="setBaroFilter('level','postbac',this)">Post-bac</button>
+                        <button class="baro-chip" onclick="setBaroFilter('level','sup',this)">Supérieur</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="insights-grid"></div>
+
+            <!-- Graphiques Baromètre Ligne 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="card flex flex-col">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold mb-1">📈 Volume de consultations ORI</h3>
+                            <p class="text-[10px] text-gray-500 font-mono">Agent_Conversationnel_ORI</p>
+                        </div>
+                        <span class="bg-indigo-500/20 text-indigo-400 text-[9px] font-bold px-3 py-1 rounded-full border border-indigo-500/40">Live SQL</span>
+                    </div>
+                    <div class="flex-1 min-h-[220px]"><canvas id="cBaro"></canvas></div>
+                </div>
+                <div class="card flex flex-col">
+                    <div class="mb-6">
+                        <h3 class="text-sm font-bold mb-1">🎓 Répartition des domaines d'intérêt</h3>
+                        <p class="text-[10px] text-gray-500 font-mono">Base filtrée : <span id="dom-count-label"></span></p>
+                    </div>
+                    <div id="dom-bars-baro" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Graphiques Baromètre Ligne 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="card">
+                    <h3 class="text-sm font-bold mb-1">📚 Niveaux scolaires</h3>
+                    <p class="text-[10px] text-gray-500 font-mono mb-4">distribution relative</p>
+                    <div class="min-h-[200px]"><canvas id="cLevelBaro"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3 class="text-sm font-bold mb-1">📬 Thématiques CRM correspondantes</h3>
+                    <p class="text-[10px] text-gray-500 font-mono mb-4">Basé sur <span id="crm-total-label"></span> envois liés à ces profils</p>
+                    <div class="min-h-[200px]"><canvas id="cThemeBaro"></canvas></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="view-audience" class="hidden space-y-6"><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="card"><h3 class="text-sm font-bold mb-1">🎯 Domaines d'intérêt</h3><canvas id="chart-domaines" height="200"></canvas></div><div class="card"><h3 class="text-sm font-bold mb-1">📚 Niveaux scolaires</h3><canvas id="chart-niveaux" height="200"></canvas></div></div><div class="card"><h3 class="text-sm font-bold mb-1">📄 Profils inscrits</h3><canvas id="chart-profils" height="80"></canvas></div></div>
+        <div id="view-scoring" class="hidden space-y-6"><div class="flex flex-wrap gap-4 card mb-6"><div class="flex-1"><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Domaine</label><select id="score-f-domaine" class="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-2 text-sm outline-none"></select></div><div class="flex-1"><label class="block text-xs font-bold text-gray-500 uppercase mb-2">Niveau</label><select id="score-f-niveau" class="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-2 text-sm outline-none"></select></div><button onclick="updateScoring()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-lg font-bold self-end h-[38px] text-white transition-all shadow-lg shadow-indigo-500/20">Simuler l'audience</button></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"><div class="card text-center border-t-4 border-green-500 flex flex-col justify-between"><div><h2 class="text-4xl font-black text-green-500 mb-1">A</h2><p class="text-sm font-bold text-green-400 mb-4">Hot</p><h3 id="score-vol-a" class="text-4xl font-black mb-1 text-white">0</h3><p class="text-xs text-gray-500 mb-6">leads qualifiés</p></div><div><div class="text-green-500 font-black text-3xl mb-1">15.00 € <span class="text-base text-gray-500 font-normal">/ lead</span></div><p class="text-xs text-gray-400">Revenu pot. : <span id="score-rev-a" class="font-bold text-white">0 €</span></p></div></div><div class="card text-center border-t-4 border-yellow-500 flex flex-col justify-between"><div><h2 class="text-4xl font-black text-yellow-500 mb-1">B</h2><p class="text-sm font-bold text-yellow-400 mb-4">Warm</p><h3 id="score-vol-b" class="text-4xl font-black mb-1 text-white">0</h3><p class="text-xs text-gray-500 mb-6">leads qualifiés</p></div><div><div class="text-yellow-500 font-black text-3xl mb-1">10.00 € <span class="text-base text-gray-500 font-normal">/ lead</span></div><p class="text-xs text-gray-400">Revenu pot. : <span id="score-rev-b" class="font-bold text-white">0 €</span></p></div></div><div class="card text-center border-t-4 border-red-500 flex flex-col justify-between"><div><h2 class="text-4xl font-black text-red-500 mb-1">C</h2><p class="text-sm font-bold text-red-400 mb-4">Cold</p><h3 id="score-vol-c" class="text-4xl font-black mb-1 text-white">0</h3><p class="text-xs text-gray-500 mb-6">leads qualifiés</p></div><div><div class="text-red-500 font-black text-3xl mb-1">5.00 € <span class="text-base text-gray-500 font-normal">/ lead</span></div><p class="text-xs text-gray-400">Revenu pot. : <span id="score-rev-c" class="font-bold text-white">0 €</span></p></div></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="card"><h3 class="text-sm font-bold mb-4 flex items-center gap-2">⚙️ Formule de scoring</h3><p class="text-xs text-gray-500 mb-6">4 dimensions pondérées - score 0-100 - A/B/C</p><div class="space-y-3"><div class="bg-gray-900/50 p-3 rounded-lg border border-gray-800 flex items-center gap-4"><div class="text-indigo-400 font-bold w-12 text-right">35 %</div><div><p class="text-sm font-bold text-gray-200">Fraîcheur</p><p class="text-xs text-gray-500">Décroissance exponentielle (demi-vie 90j) depuis dernière interaction ORI</p></div></div><div class="bg-gray-900/50 p-3 rounded-lg border border-gray-800 flex items-center gap-4"><div class="text-pink-500 font-bold w-12 text-right">25 %</div><div><p class="text-sm font-bold text-gray-200">Complétude</p><p class="text-xs text-gray-500">7 champs profil : nom, email, tel, CP, niveau, domaine, série</p></div></div><div class="bg-gray-900/50 p-3 rounded-lg border border-gray-800 flex items-center gap-4"><div class="text-yellow-500 font-bold w-12 text-right">25 %</div><div><p class="text-sm font-bold text-gray-200">Intention</p><p class="text-xs text-gray-500">Profondeur chatbot (tokens), session completed, feedback positif</p></div></div><div class="bg-gray-900/50 p-3 rounded-lg border border-gray-800 flex items-center gap-4"><div class="text-green-500 font-bold w-12 text-right">15 %</div><div><p class="text-sm font-bold text-gray-200">Canal</p><p class="text-xs text-gray-500">Email opt-in (+40pt) - Tél opt-in (+60pt) - Aucun : 20pt baseline</p></div></div></div><div class="mt-4 text-[11px] text-indigo-300 font-mono leading-relaxed bg-indigo-900/10 p-3 rounded border border-indigo-900/30">Score = 0.35*fraîcheur + 0.25*complétude + 0.25*intention + 0.15*canal<br>Grade A ≥ 75 · Grade B ≥ 40 · Grade C < 40</div></div><div class="card flex flex-col h-full"><h3 class="text-sm font-bold mb-1 flex items-center gap-2">💰 Revenu potentiel</h3><p class="text-xs text-gray-500 mb-6">Tarification différenciée par grade</p><div class="flex-1 min-h-[200px] mb-4"><canvas id="revenueChart"></canvas></div><div id="chart-legend" class="text-[11px]"><div class="flex justify-between py-2 border-b border-gray-800"><span class="text-green-500 font-bold">Grade A - Hot</span><span class="text-gray-400"><span id="l-vol-a">0</span> × 15.00 €</span><span id="l-rev-a" class="font-bold text-white">0 €</span></div><div class="flex justify-between py-2 border-b border-gray-800"><span class="text-yellow-500 font-bold">Grade B - Warm</span><span class="text-gray-400"><span id="l-vol-b">0</span> × 10.00 €</span><span id="l-rev-b" class="font-bold text-white">0 €</span></div><div class="flex justify-between py-2 border-b border-gray-800"><span class="text-red-500 font-bold">Grade C - Cold</span><span class="text-gray-400"><span id="l-vol-c">0</span> × 5.00 €</span><span id="l-rev-c" class="font-bold text-white">0 €</span></div><div class="flex justify-between py-2 mt-1"><span class="font-bold uppercase text-white">Total</span><span id="l-rev-total" class="font-black text-indigo-400 text-sm">0 €</span></div></div></div></div></div>
+        <div id="view-crm" class="hidden space-y-6"><div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="card lg:col-span-5 flex flex-col"><h3 class="text-base font-bold mb-1 flex items-center gap-2">📬 CRM Email Performance</h3><p class="text-[11px] text-gray-500 mb-3">CRM_Communication — Tunnel de conversion</p><div class="flex flex-col items-center justify-center flex-1 w-full space-y-0"><div class="w-full bg-[#1e1b4b] border border-indigo-500/30 rounded-xl py-2 px-4 relative overflow-hidden shadow-md shadow-indigo-900/20"><div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div><p class="text-[9px] text-indigo-300 font-bold uppercase tracking-widest mb-0">Total Envois Email</p><h4 class="text-2xl font-black text-white" id="funnel-envois">0</h4></div><div class="flex flex-col items-center"><div class="h-2 w-px bg-indigo-500/50"></div><div class="bg-indigo-900/60 text-indigo-300 text-[9px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/40 z-10" id="funnel-or">0% Taux d'ouverture</div><div class="h-2 w-px bg-green-500/50"></div></div><div class="w-full bg-[#064e3b] border border-green-500/30 rounded-xl py-2 px-4 relative overflow-hidden shadow-md shadow-green-900/20"><div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div><p class="text-[9px] text-green-300 font-bold uppercase tracking-widest mb-0">Ouvertures Uniques</p><h4 class="text-2xl font-black text-white" id="funnel-opens">0</h4></div><div class="flex flex-col items-center"><div class="h-2 w-px bg-green-500/50"></div><div class="bg-green-900/60 text-green-300 text-[9px] font-bold px-2 py-0.5 rounded-full border border-green-500/40 z-10" id="funnel-ctr">0% Taux de clic (CTR)</div><div class="h-2 w-px bg-orange-500/50"></div></div><div class="w-full bg-[#451a03] border border-orange-500/30 rounded-xl py-2 px-4 relative overflow-hidden shadow-md shadow-orange-900/20"><div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div><p class="text-[9px] text-orange-300 font-bold uppercase tracking-widest mb-0">Clics (Trafic généré)</p><h4 class="text-2xl font-black text-white" id="funnel-clicks">0</h4></div></div></div><div class="card lg:col-span-7 flex flex-col"><h3 class="text-base font-bold mb-1 flex items-center gap-2">🏛️ Salons — Taux de conversion</h3><p class="text-[11px] text-gray-500 mb-3">Salons_Inscrits_et_venus</p><div class="flex-1 min-h-[120px] mb-3 relative"><canvas id="salonsChart"></canvas></div><div class="grid grid-cols-3 gap-3" id="salons-conv-boxes"></div></div></div><div class="card"><h3 class="text-lg font-bold mb-1 flex items-center gap-2">🔔 No-Shows Produit — Vue opérationnelle</h3><p class="text-xs text-gray-500 mb-6">Inscrits salon avec Showed_up = FALSE → opportunité de relance</p><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="bg-[#241318] border border-[#401a23] p-6 rounded-xl text-center shadow-inner"><p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">No-Shows moyens / Saison</p><h4 id="no-shows-est" class="text-4xl font-black text-red-500 mb-2">~0</h4><p id="no-shows-pct" class="text-xs text-gray-400 bg-[#150b0f] inline-block px-3 py-1 rounded-full border border-red-900/30">... % des inscrits aux Salons</p></div><div class="bg-[#241b12] border border-[#402d18] p-6 rounded-xl text-center shadow-inner"><p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Profils Opt-in Commercial</p><h4 id="no-shows-optin" class="text-4xl font-black text-yellow-500 mb-2">~0</h4><p id="no-shows-optin-pct" class="text-xs text-gray-400 bg-[#15100b] inline-block px-3 py-1 rounded-full border border-yellow-900/30">... % des inscrits sur le Site</p></div><div class="bg-[#12241b] border border-[#18402d] p-6 rounded-xl text-center shadow-inner"><p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Revenu Pack No-Shows</p><h4 id="no-shows-rev" class="text-4xl font-black text-green-400 mb-2">€0</h4><p class="text-xs text-gray-500 mt-2">Forfait flat par salon livré</p></div></div></div></div>
+        <div id="view-config" class="hidden space-y-6"><div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="card lg:col-span-4 h-fit"><h2 class="text-lg font-semibold mb-6 flex items-center gap-2">1. Ciblage</h2><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-500 mb-2">Domaine d'étude</label><select id="conf-domaine" class="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm outline-none"></select></div><div><label class="block text-xs font-bold text-gray-500 mb-2">Catégorie de niveau</label><select id="conf-cat-niveau" class="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm outline-none text-indigo-300"><option value="">Toutes les catégories</option><option value="Collège">Collège</option><option value="Lycée">Lycée</option><option value="Supérieur">Études Supérieures</option></select></div><div><label class="block text-xs font-bold text-gray-500 mb-2">Niveau exact (Optionnel)</label><select id="conf-niveau" class="w-full bg-[#0a0a0f] border border-gray-700 rounded-lg p-3 text-sm outline-none"></select></div><button onclick="estimateVolumes()" class="w-full bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-white transition-all mt-4 border border-gray-600">Estimer la disponibilité</button></div></div><div class="card lg:col-span-4 h-fit opacity-50 pointer-events-none transition-all duration-300 relative" id="config-volumes-card"><div id="loader-volumes" class="absolute inset-0 bg-[#151623]/80 rounded-16px flex items-center justify-center hidden z-10 font-bold text-indigo-400">Calcul en cours...</div><h2 class="text-lg font-semibold mb-6 flex items-center gap-2">2. Volumes</h2><p class="text-xs text-gray-500 mb-4 italic">Double-cliquez sur les chiffres pour saisir un volume précis.</p><div class="space-y-6"><div class="bg-[#0a0a0f] p-4 rounded-xl border border-[#22c55e]/30"><div class="flex justify-between items-center mb-4"><div><span class="text-[#22c55e] font-black text-xl">A</span> <span class="text-xs text-gray-500">Hot (15€/l)</span></div><div class="text-right flex items-center justify-end"><span id="val-vol-a" class="text-2xl font-black text-white cursor-text hover:text-indigo-200 transition-colors" ondblclick="enableManualInput('a')" title="Double-cliquez pour saisir">0</span></div></div><input type="range" id="input-vol-a" min="0" max="0" value="0" class="w-full h-2 cursor-pointer accent-[#22c55e]" oninput="updateSubtotal()"><div class="flex justify-between text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-wider"><span>0</span><span>Max: <span id="max-vol-a" class="text-white">0</span></span></div></div><div class="bg-[#0a0a0f] p-4 rounded-xl border border-[#eab308]/30"><div class="flex justify-between items-center mb-4"><div><span class="text-[#eab308] font-black text-xl">B</span> <span class="text-xs text-gray-500">Warm (10€/l)</span></div><div class="text-right flex items-center justify-end"><span id="val-vol-b" class="text-2xl font-black text-white cursor-text hover:text-indigo-200 transition-colors" ondblclick="enableManualInput('b')" title="Double-cliquez pour saisir">0</span></div></div><input type="range" id="input-vol-b" min="0" max="0" value="0" class="w-full h-2 cursor-pointer accent-[#eab308]" oninput="updateSubtotal()"><div class="flex justify-between text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-wider"><span>0</span><span>Max: <span id="max-vol-b" class="text-white">0</span></span></div></div><div class="bg-[#0a0a0f] p-4 rounded-xl border border-[#ef4444]/30"><div class="flex justify-between items-center mb-4"><div><span class="text-[#ef4444] font-black text-xl">C</span> <span class="text-xs text-gray-500">Cold (5€/l)</span></div><div class="text-right flex items-center justify-end"><span id="val-vol-c" class="text-2xl font-black text-white cursor-text hover:text-indigo-200 transition-colors" ondblclick="enableManualInput('c')" title="Double-cliquez pour saisir">0</span></div></div><input type="range" id="input-vol-c" min="0" max="0" value="0" class="w-full h-2 cursor-pointer accent-[#ef4444]" oninput="updateSubtotal()"><div class="flex justify-between text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-wider"><span>0</span><span>Max: <span id="max-vol-c" class="text-white">0</span></span></div></div><div class="pt-2 flex justify-between items-center"><span class="text-sm text-gray-400">Sous-total :</span><span id="current-subtotal" class="font-bold text-xl text-white">0 €</span></div><button onclick="addToCart()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold text-white transition-all shadow-lg shadow-indigo-500/20">Ajouter au panier</button></div></div><div class="card lg:col-span-4 flex flex-col h-full"><h2 class="text-lg font-semibold mb-6 flex items-center gap-2">🛒 Panier</h2><div id="cart-items" class="flex-1 space-y-3 mb-6 overflow-y-auto max-h-[300px] pr-2"><div class="text-center text-gray-600 text-sm mt-10 italic" id="empty-cart-msg">Votre panier est vide.</div></div><div class="border-t border-gray-800 pt-6"><div class="flex justify-between items-center mb-6"><span class="text-gray-400 uppercase text-xs font-bold block">Total de la commande</span><span id="cart-total-price" class="text-4xl font-black text-indigo-400">0 €</span></div><button onclick="checkout()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-white transition-all text-lg shadow-lg shadow-green-500/20">Valider & Générer Facture</button></div></div></div></div>
+
+    </main>
+
+    <!-- MODAL FACTURE (Inchangé) -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity"><div class="bg-[#151623] border border-gray-700 rounded-2xl w-[600px] max-w-full p-8 shadow-2xl relative"><button onclick="document.getElementById('invoice-modal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-white text-xl">✕</button><div class="text-center mb-8 border-b border-gray-800 pb-6"><div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-2xl shadow-lg mx-auto mb-4 text-white">L</div><h2 class="text-3xl font-black text-white">FACTURE PAYÉE</h2><p class="text-gray-400 text-sm mt-1">N° INV-<span id="inv-number"></span> · L'Étudiant Data</p></div><div id="invoice-items" class="space-y-4 mb-8 text-sm"></div><div class="flex justify-between items-center border-t border-gray-800 pt-6"><span class="text-xl text-gray-300">Total réglé TTC</span><span class="text-4xl font-black text-green-400" id="inv-total"></span></div><button onclick="window.print()" class="w-full mt-8 bg-gray-800 hover:bg-gray-700 py-3 rounded-lg font-bold text-white transition-all text-sm border border-gray-600">📥 Télécharger le PDF</button></div></div>
+
+    <script>
+        Chart.defaults.color = '#6b7280'; 
+        Chart.defaults.borderColor = '#1f2937'; 
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        
+        const chartColors = ['#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e'];
+        
+        function formatNumber(num) { if (!num) return "0"; if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M'; if (num >= 1000) return Math.floor(num / 1000) + 'k'; return num.toLocaleString(); }
+        function formatEuro(num) { if (!num) return "0 €"; return num.toLocaleString() + ' €'; }
+
+        // --- GESTION DES ONGLETS ---
+        function switchTab(tabId) {
+            ['overview', 'audience', 'scoring', 'crm', 'config', 'baro'].forEach(id => {
+                document.getElementById('view-' + id).classList.add('hidden');
+                document.getElementById('tab-' + id).className = "pb-3 tab-inactive flex items-center gap-2 transition-colors";
+            });
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            let activeColor = tabId === 'baro' ? "border-b-2 border-yellow-500 text-white font-bold" : "border-b-2 border-indigo-500 text-white font-bold";
+            document.getElementById('tab-' + tabId).className = `pb-3 flex items-center gap-2 transition-colors ${activeColor}`;
+            
+            if (tabId === 'scoring' && !revenueChartInstance) updateScoring();
+            if (tabId === 'crm') loadCrmStats();
+            if (tabId === 'baro') loadBarometreData();
+        }
+
+        // --- DASHBOARD PRINCIPAL ---
+        async function loadDashboard() { 
+            try { 
+                const data = await (await fetch('/api/overview')).json(); 
+                document.getElementById('kpi-profils').innerText = formatNumber(data.kpis.total_profils); 
+                document.getElementById('kpi-ori').innerText = data.kpis.taux_ori + '%'; 
+                document.getElementById('kpi-optin').innerText = data.kpis.taux_optin + '%'; 
+                const container = document.getElementById('top-domaines-container');
+                container.innerHTML = '';
+                if (data.top_domaines && data.top_domaines.length > 0) {
+                    const maxCount = data.top_domaines[0].count;
+                    data.top_domaines.forEach((dom, index) => {
+                        container.innerHTML += `<div class="mb-3"><div class="flex justify-between text-xs mb-1"><span class="text-gray-300 truncate pr-4">${dom.name}</span><span class="font-bold text-white">${formatNumber(dom.count)}</span></div><div class="w-full bg-[#0a0a0f] rounded-full h-1.5"><div class="bg-bar-${index % 5} h-1.5 rounded-full" style="width: ${Math.round((dom.count / maxCount) * 100)}%"></div></div></div>`;
+                    });
+                }
+                new Chart(document.getElementById('oriChart').getContext('2d'), { type: 'line', data: { labels: data.ori_evo.map(d => {
+                    const date = new Date(d.month + "-01");
+                    return date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }).replace('.', '');
+                }), datasets: [{ data: data.ori_evo.map(d => d.count), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4, pointRadius: 2 }] }, options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { border: { dash: [4, 4] } } } } });
+            } catch(e){} 
+        }
+
+        // ==========================================
+        // LOGIQUE BAROMÈTRE ORIENTATION (Vraie Data)
+        // ==========================================
+        let baroData = null;
+        let bFilters = {period: 'all', domain: 'all', level: 'all'};
+        let baroChart = null, levelBaroChart = null, themeBaroChart = null;
+
+        async function loadBarometreData() {
+            document.getElementById('baro-loader').classList.remove('hidden');
+            try {
+                const res = await fetch('/api/barometre', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(bFilters)
+                });
+                baroData = await res.json();
+                updateBarometerUI();
+            } catch (e) { console.error("Erreur Baromètre", e); }
+            finally { document.getElementById('baro-loader').classList.add('hidden'); }
+        }
+
+        function setBaroFilter(key, val, el) {
+            bFilters[key] = val;
+            el.closest('div').querySelectorAll('.baro-chip').forEach(c => c.classList.remove('on'));
+            el.classList.add('on');
+            loadBarometreData(); // On relance un vrai call backend
+        }
+
+        function computeInsights() {
+            let monthly = baroData.monthly || [];
+            
+            let maxM = monthly.reduce((a,b) => (a.messages||0) > (b.messages||0) ? a : b, {messages:0, month:'—'});
+            let minM = monthly.reduce((a,b) => (a.messages||0) < (b.messages||0) ? a : b, {messages:999999, month:'—'});
+            let maxMLabel = maxM.month !== '—' ? new Date(maxM.month+"-01").toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : '—';
+
+            let dom1Count = baroData.domains[0] ? baroData.domains[0].count : 0;
+            let dom1Pct = baroData.domains[0] ? baroData.domains[0].pct : 0;
+            let dom1Name = baroData.domains[0] ? baroData.domains[0].domain.split(',')[0] : '—';
+
+            let identPct = baroData.kpis.identified_pct || 0;
+            let envois = baroData.kpis.total_envois || 0;
+            let avgTok = baroData.kpis.avg_tokens || 7123;
+
+            return [
+                { num: '#1', icon: '🔥', color: 'text-yellow-500', bg: 'bg-[#151623] border-yellow-500/50', title: 'Pic de consultations', metric: maxM.month !== '—' ? formatNumber(maxM.messages) : "0", body: maxM.month !== '—' ? maxMLabel + ' concentre le pic de demande. Ratio x' + (minM.messages>0 ? Math.round(maxM.messages/minM.messages) : 1) + ' vs le mois le plus faible.' : 'Aucun message pour cette sélection.', tag: '↑ Pic' },
+                { num: '#2', icon: '🎓', color: 'text-indigo-400', bg: 'bg-[#151623] border-gray-700', title: 'Domaine #1 : ' + dom1Name, metric: formatNumber(dom1Count) + ' profils', body: dom1Name + ' représente ' + dom1Pct + '% de la base filtrée.', tag: '↑ Vivier' },
+                { num: '#3', icon: '🎯', color: 'text-green-400', bg: 'bg-[#151623] border-gray-700', title: 'Profils identifiés', metric: identPct + '%', body: identPct + '% des sessions sont liées à un profil inscrit de cette catégorie.', tag: '→ Levier opt-in' },
+                { num: '#4', icon: '📬', color: 'text-cyan-400', bg: 'bg-[#151623] border-gray-700', title: 'Envois CRM période', metric: formatNumber(envois), body: formatNumber(envois) + ' messages CRM ciblés ont été envoyés sur cette audience.', tag: '→ Canal dominant' },
+                { num: '#5', icon: '📐', color: 'text-purple-400', bg: 'bg-[#151623] border-gray-700', title: 'Profondeur moyenne', metric: formatNumber(avgTok) + ' tokens', body: 'Tokens moyens par conversation. Plus le chiffre est haut, plus le besoin de conseil est prononcé.', tag: '→ Scoring signal' },
+            ];
+        }
+
+        function updateBarometerUI() {
+            if(!baroData) return;
+            let insights = computeInsights();
+            
+            // 1. INSIGHT CARDS
+            document.getElementById('insights-grid').innerHTML = insights.map((ins, i) => `
+                <div class="${ins.bg} rounded-xl p-4 shadow-lg flex flex-col justify-between border transition-all duration-300 hover:-translate-y-1">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Insight ${ins.num}</span>
+                            <span class="text-2xl">${ins.icon}</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-white mb-1 leading-tight">${ins.title}</h4>
+                        <div class="${ins.color} text-2xl font-black tracking-tight mb-2">${ins.metric}</div>
+                        <p class="text-[10px] text-gray-400 leading-relaxed">${ins.body}</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-800">
+                        <span class="inline-block bg-green-500/10 text-green-400 border border-green-500/20 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest">↻ ${ins.tag}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 2. CHART 1: MONTHLY (cBaro)
+            let monthly = baroData.monthly || [];
+            let labels = monthly.map(r => new Date(r.month+"-01").toLocaleDateString('fr-FR', {month:'short', year:'2-digit'}));
+            let vals = monthly.map(r => r.messages || 0);
+
+            if(baroChart) {
+                baroChart.data.labels = labels;
+                baroChart.data.datasets[0].data = vals;
+                baroChart.data.datasets[0].backgroundColor = vals.map(v => v === Math.max(...vals) ? '#f59e0b' : '#6366f188');
+                baroChart.update();
+            } else {
+                baroChart = new Chart(document.getElementById('cBaro').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ label: 'Messages ORI', data: vals, backgroundColor: vals.map(v => v === Math.max(...vals) ? '#f59e0b' : '#6366f188'), borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1f2937', drawBorder: false, borderDash: [5, 5] } } } }
+                });
+            }
+
+            // 3. CHART 2: DOMAIN BARS
+            let doms = (baroData.domains || []).slice(0, 5);
+            let maxD = Math.max(...doms.map(d => d.count), 1);
+            document.getElementById('dom-count-label').textContent = formatNumber(baroData.kpis.total_profiles) + ' profils filtrés';
+            
+            document.getElementById('dom-bars-baro').innerHTML = doms.map((d, i) => {
+                let pct = (d.count / maxD * 100).toFixed(1);
+                return `
+                <div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-300 truncate pr-4">${d.domain.split(',')[0]}</span><span class="font-bold text-white">${formatNumber(d.count)} <span class="text-[10px] text-gray-500 font-normal">(${d.pct}%)</span></span></div>
+                    <div class="w-full bg-[#0a0a0f] rounded-full h-1.5"><div class="bg-bar-${i % 5} h-1.5 rounded-full transition-all duration-1000 ease-out" style="width: ${pct}%"></div></div>
+                </div>`;
+            }).join('');
+
+            // 4. CHART 3: LEVELS (cLevelBaro)
+            let slData = baroData.study_levels || [];
+            if(levelBaroChart) {
+                levelBaroChart.data.labels = slData.map(s => s.level);
+                levelBaroChart.data.datasets[0].data = slData.map(s => s.count);
+                levelBaroChart.update();
+            } else {
+                levelBaroChart = new Chart(document.getElementById('cLevelBaro').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: slData.map(s => s.level), datasets: [{ label: 'Profils', data: slData.map(s => s.count), backgroundColor: chartColors, borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxRotation: 35, minRotation: 35 } }, y: { grid: { color: '#1f2937', drawBorder: false, borderDash: [5, 5] } } } }
+                });
+            }
+
+            // 5. CHART 4: THEMES (cThemeBaro)
+            let themes = (baroData.crm_themes || []).slice(0, 5);
+            document.getElementById('crm-total-label').textContent = formatNumber(baroData.kpis.total_envois);
+            
+            if(themeBaroChart) {
+                themeBaroChart.data.labels = themes.map(t => t.theme.replace("L'Etudiant : ",'').slice(0,25));
+                themeBaroChart.data.datasets[0].data = themes.map(t => t.count);
+                themeBaroChart.update();
+            } else {
+                themeBaroChart = new Chart(document.getElementById('cThemeBaro').getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: themes.map(t => t.theme.replace("L'Etudiant : ",'').slice(0,25)), datasets: [{ data: themes.map(t => t.count), backgroundColor: chartColors, borderColor: '#151623', borderWidth: 2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#9ca3af', usePointStyle: true, boxWidth: 8, font: {size: 10} } } } }
+                });
+            }
+        }
+
+
+        // ==========================================
+        // FIN LOGIQUE BAROMÈTRE / AUTRES FONCTIONS RESTENT INCHANGÉES
+        // ==========================================
+
+        async function loadAudienceStats() {
+            try {
+                const data = await (await fetch('/api/audience-stats')).json();
+                new Chart(document.getElementById('chart-domaines').getContext('2d'), { type: 'bar', data: { labels: data.domaines.map(d => d.label.substring(0,20)), datasets: [{ data: data.domaines.map(d => d.val), backgroundColor: chartColors, borderRadius: 4 }] }, options: { indexAxis: 'y', plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{grid:{display:false}}} } });
+                new Chart(document.getElementById('chart-niveaux').getContext('2d'), { type: 'bar', data: { labels: data.niveaux.map(d => d.label.substring(0,15)), datasets: [{ data: data.niveaux.map(d => d.val), backgroundColor: chartColors, borderRadius: 4 }] }, options: { plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{display:false}} } });
+                new Chart(document.getElementById('chart-profils').getContext('2d'), { type: 'bar', data: { labels: data.profils.map(d => d.label), datasets: [{ data: data.profils.map(d => d.val), backgroundColor: ['#6366f1', '#8b5cf6', '#a855f7'], borderRadius: 4 }] }, options: { indexAxis: 'y', plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{grid:{display:false}}} } });
+            } catch(e) {}
+        }
+
+        async function loadMarketplaceRefs() { 
+            try {
+                const data = await (await fetch('/api/referentiels')).json(); 
+                const fill = (id, list) => { document.getElementById(id).innerHTML = '<option value="">Tous les champs</option>' + list.map(x => `<option value="${x}">${x}</option>`).join(''); }; 
+                fill('score-f-domaine', data.domaines); 
+                fill('score-f-niveau', data.niveaux); 
+                fill('conf-domaine', data.domaines);
+                fill('conf-niveau', data.niveaux);
+            } catch(e) {}
+        }
+
+        // Lancement initial
+        loadDashboard(); loadAudienceStats(); loadMarketplaceRefs();
+        
+        let revenueChartInstance = null; let salonsChartInstance = null; let currentMaxEstimate = { A: 0, B: 0, C: 0 }; let cart = [];
+        
+        async function updateScoring() {
+            try {
+                const filters = { domaine_etude: document.getElementById('score-f-domaine').value || null, study_level: document.getElementById('score-f-niveau').value || null, region: null };
+                const data = await (await fetch('/api/estimate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(filters) })).json();
+                
+                document.getElementById('score-vol-a').innerText = formatNumber(data.grades.A.vol); document.getElementById('score-vol-b').innerText = formatNumber(data.grades.B.vol); document.getElementById('score-vol-c').innerText = formatNumber(data.grades.C.vol);
+                document.getElementById('score-rev-a').innerText = formatEuro(data.grades.A.total); document.getElementById('score-rev-b').innerText = formatEuro(data.grades.B.total); document.getElementById('score-rev-c').innerText = formatEuro(data.grades.C.total);
+
+                if (revenueChartInstance) revenueChartInstance.destroy();
+                revenueChartInstance = new Chart(document.getElementById('revenueChart').getContext('2d'), { 
+                    type: 'bar', 
+                    data: { labels: ['A - Hot', 'B - Warm', 'C - Cold'], datasets: [{ data: [data.grades.A.total, data.grades.B.total, data.grades.C.total], backgroundColor: ['#22c55e', '#eab308', '#ef4444'], borderRadius: 6, maxBarThickness: 60 }] }, 
+                    options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } }, maintainAspectRatio: false } 
+                });
+            } catch(e) {}
+        }
+
+        let crmLoaded = false;
+        async function loadCrmStats() {
+            if (crmLoaded) return; 
+            try {
+                const res = await fetch('/api/crm-stats');
+                const data = await res.json();
+                
+                document.getElementById('funnel-envois').innerText = formatNumber(data.email_perf.envois);
+                document.getElementById('funnel-or').innerText = data.email_perf.open_rate + "% Taux d'ouverture";
+                document.getElementById('funnel-opens').innerText = formatNumber(data.email_perf.opened);
+                document.getElementById('funnel-ctr').innerText = data.email_perf.ctr + "% Taux de clic (CTR)";
+                document.getElementById('funnel-clicks').innerText = formatNumber(data.email_perf.clicked);
+
+                if (salonsChartInstance) salonsChartInstance.destroy();
+                salonsChartInstance = new Chart(document.getElementById('salonsChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.salons_chart.labels.length > 0 ? data.salons_chart.labels : ["Aucune donnée"],
+                        datasets: [
+                            { label: 'Inscrits', data: data.salons_chart.inscrits, backgroundColor: '#2a2b4a', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.7 },
+                            { label: 'Venants', data: data.salons_chart.venants, backgroundColor: '#6366f1', borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.7 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#6b7280', usePointStyle: true, boxWidth: 8 } } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1f2937', drawBorder: false, borderDash: [5, 5] } } } }
+                });
+
+                document.getElementById('no-shows-est').innerText = "~" + data.no_shows.estimed.toLocaleString();
+                document.getElementById('no-shows-optin').innerText = "~" + data.no_shows.optin.toLocaleString();
+                document.getElementById('no-shows-rev').innerText = "€" + data.no_shows.revenue.toLocaleString();
+                document.getElementById('no-shows-pct').innerText = data.no_shows.pct_no_shows + "% des inscrits aux Salons";
+                document.getElementById('no-shows-optin-pct').innerText = data.no_shows.pct_optin_site + "% des inscrits sur le Site";
+
+                crmLoaded = true;
+            } catch(e) {}
+        }
+
+        async function estimateVolumes() {
+            const loader = document.getElementById('loader-volumes');
+            loader.classList.remove('hidden');
+            try {
+                const filters = { domaine_etude: document.getElementById('conf-domaine').value || null, study_level_category: document.getElementById('conf-cat-niveau').value || null, study_level: document.getElementById('conf-niveau').value || null };
+                const data = await (await fetch('/api/estimate', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(filters) })).json();
+                
+                currentMaxEstimate.A = data.grades.A.vol; currentMaxEstimate.B = data.grades.B.vol; currentMaxEstimate.C = data.grades.C.vol;
+                document.getElementById('max-vol-a').innerText = formatNumber(data.grades.A.vol); document.getElementById('max-vol-b').innerText = formatNumber(data.grades.B.vol); document.getElementById('max-vol-c').innerText = formatNumber(data.grades.C.vol);
+
+                ['a', 'b', 'c'].forEach(g => {
+                    const input = document.getElementById(`input-vol-${g}`);
+                    input.value = 0; input.max = data.grades[g.toUpperCase()].vol;
+                    document.getElementById(`val-vol-${g}`).innerText = "0";
+                });
+                
+                updateSubtotal();
+                document.getElementById('config-volumes-card').classList.remove('opacity-50', 'pointer-events-none');
+            } catch(e) {} finally { loader.classList.add('hidden'); }
+        }
+
+        function enableManualInput(grade) {
+            const span = document.getElementById(`val-vol-${grade}`);
+            if (span.style.display === 'none') return;
+            const maxVal = parseInt(document.getElementById(`input-vol-${grade}`).max) || 0;
+            const currentVal = parseInt(document.getElementById(`input-vol-${grade}`).value) || 0;
+            const input = document.createElement('input');
+            input.type = 'number'; input.value = currentVal; input.max = maxVal; input.min = 0;
+            input.className = "w-24 bg-[#151623] border border-gray-600 text-white font-black text-xl text-right outline-none rounded px-2 py-0.5 focus:border-indigo-500 shadow-lg";
+            
+            input.onblur = function() {
+                let newVal = parseInt(this.value) || 0;
+                if (newVal > maxVal) newVal = maxVal; if (newVal < 0) newVal = 0;
+                document.getElementById(`input-vol-${grade}`).value = newVal;
+                span.innerText = newVal.toLocaleString();
+                span.style.display = 'inline'; this.remove(); updateSubtotal();
+            };
+            input.onkeydown = function(e) { if (e.key === 'Enter') this.blur(); };
+            span.style.display = 'none'; span.parentNode.appendChild(input); input.focus(); input.select();
+        }
+
+        function updateSubtotal() {
+            ['a', 'b', 'c'].forEach(g => {
+                const val = parseInt(document.getElementById(`input-vol-${g}`).value) || 0;
+                document.getElementById(`val-vol-${g}`).innerText = val.toLocaleString();
+            });
+            const volA = parseInt(document.getElementById('input-vol-a').value) || 0;
+            const volB = parseInt(document.getElementById('input-vol-b').value) || 0;
+            const volC = parseInt(document.getElementById('input-vol-c').value) || 0;
+            document.getElementById('current-subtotal').innerText = formatEuro((volA * 15) + (volB * 10) + (volC * 5));
+        }
+
+        function addToCart() {
+            const volA = parseInt(document.getElementById('input-vol-a').value) || 0;
+            const volB = parseInt(document.getElementById('input-vol-b').value) || 0;
+            const volC = parseInt(document.getElementById('input-vol-c').value) || 0;
+            if(volA === 0 && volB === 0 && volC === 0) return alert("Veuillez glisser au moins une jauge ou double-cliquer pour ajouter des leads.");
+            
+            const dom = document.getElementById('conf-domaine').value || "Tous domaines";
+            const cat = document.getElementById('conf-cat-niveau').value;
+            const niv = document.getElementById('conf-niveau').value;
+            
+            cart.push({
+                id: Date.now(), title: `${dom.substring(0,30)} | ${niv ? niv : (cat ? `Cat. ${cat}` : "Tous niveaux")}`,
+                volA: volA, volB: volB, volC: volC, price: (volA * 15) + (volB * 10) + (volC * 5)
+            });
+            renderCart();
+            ['a', 'b', 'c'].forEach(g => { document.getElementById(`input-vol-${g}`).value = 0; document.getElementById(`val-vol-${g}`).innerText = "0"; });
+            updateSubtotal();
+        }
+
+        function removeCartItem(id) { cart = cart.filter(item => item.id !== id); renderCart(); }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-600 text-sm mt-10 italic" id="empty-cart-msg">Votre panier est vide.</div>`;
+                document.getElementById('cart-total-price').innerText = "0 €"; return;
+            }
+            let total = 0;
+            container.innerHTML = cart.map(item => {
+                total += item.price; let details = [];
+                if(item.volA > 0) details.push(`<span class="text-green-500 font-bold">${item.volA} A</span>`);
+                if(item.volB > 0) details.push(`<span class="text-yellow-500 font-bold">${item.volB} B</span>`);
+                if(item.volC > 0) details.push(`<span class="text-red-500 font-bold">${item.volC} C</span>`);
+                return `<div class="bg-[#0a0a0f] p-3 rounded-lg border border-gray-800 flex justify-between items-center group mb-2"><div><p class="text-xs font-bold text-white mb-1">${item.title}</p><p class="text-[10px] text-gray-400 flex gap-2">${details.join(" · ")}</p></div><div class="flex items-center gap-3"><span class="font-black text-indigo-400 text-sm">${formatEuro(item.price)}</span><button onclick="removeCartItem(${item.id})" class="text-red-500/50 hover:text-red-500 text-lg opacity-0 group-hover:opacity-100 transition-opacity">×</button></div></div>`;
+            }).join('');
+            document.getElementById('cart-total-price').innerText = formatEuro(total);
+        }
+
+        function checkout() {
+            if(cart.length === 0) return alert("Votre panier est vide !");
+            let total = 0;
+            document.getElementById('invoice-items').innerHTML = cart.map(item => {
+                total += item.price;
+                return `<div class="flex justify-between items-center border-b border-gray-800/50 pb-2"><div><p class="font-bold text-gray-200">${item.title}</p><p class="text-xs text-gray-500">Pack Data (${item.volA} A, ${item.volB} B, ${item.volC} C)</p></div><div class="font-bold text-white">${formatEuro(item.price)}</div></div>`;
+            }).join('');
+            document.getElementById('inv-total').innerText = formatEuro(total);
+            document.getElementById('inv-number').innerText = Math.floor(Math.random() * 90000) + 10000;
+            document.getElementById('invoice-modal').classList.remove('hidden');
+            cart = []; renderCart();
+        }
+    </script>
+</body>
+</html>
